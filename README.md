@@ -16,5 +16,12 @@ A high-performance, standalone 3D incremental desktop clicker game built using *
 
 
 * **You can clone this repo or download the source code to get it perfectly in no download but you may have to compile or run it
+## How to clone 
+
+* ```bash
+git clone https://github.com/azaanas1/clickergamets
+
+```
+
 
 
