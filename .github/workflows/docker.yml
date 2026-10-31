@@ -1,23 +1,41 @@
-name: Secure Interactive Debian Session
+name: Local Windows Container Execution
 
 on:
+  push:
+    branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
-  debian-ssh-session:
-    runs-on: ubuntu-latest # Runs natively on the host to avoid socket blocks
+  local-windows-run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
-      - name: Initialize Debian Container
+      - name: Spin Up Local Windows LTSC Environment
         run: |
-          # Launches the Debian environment with host sharing so Upterm can bridge the SSH session
-          docker run -d --name debian-cli --network host debian:bookworm-slim sleep infinity
-          
-          # Injects minimal networking requirements into the container
-          docker exec debian-cli apt-get update
-          docker exec debian-cli apt-get install -y openssh-client git curl
+          # Binds port 8006 explicitly to the runner's local loopback interface (127.0.0.1)
+          docker run -d --name windows-vm \
+            -p 127.0.0.1:8006:8006 \
+            --device=/dev/kvm \
+            --cap-add=NET_ADMIN \
+            -e VERSION="win11ltsc" \
+            -e RAM_SIZE="4G" \
+            -e CPU_CORES="2" \
+            dockur/windows
 
-      - name: Establish Secure Outbound SSH Tunnel (Upterm)
-        uses: lhotari/action-upterm@v1
-        with:
-          limit-access-to-actor: true
+      - name: Wait for Local System Boot Initialization
+        run: |
+          echo "Monitoring local container startup on 127.0.0.1..."
+          # Standard loop to verify the container internal web server responds locally
+          id=0
+          until curl -s http://127.0.0.1:8006 > /dev/null || [ $id -eq 12 ]; do
+            echo "Waiting for Windows environment initialization..."
+            sleep 10
+            id=$((id+1))
+          done
+
+      - name: Execute Local Integration Script
+        run: |
+          echo "Windows LTSC environment is accessible locally on the runner network."
+          # You can add your curl, compilation, or automation scripts here
+          curl -I http://127.0.0.1:8006
