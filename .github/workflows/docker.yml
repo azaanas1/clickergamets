@@ -13,11 +13,12 @@ jobs:
     steps:
       - name: Spin Up Local Windows LTSC Environment
         run: |
+          # Changed VERSION value to the exact shortcode "11l" for Windows 11 LTSC
           docker run -d --name windows-vm \
             -p 127.0.0.1:8006:8006 \
             --device=/dev/kvm \
             --cap-add=NET_ADMIN \
-            -e VERSION="win11ltsc" \
+            -e VERSION="11l" \
             -e RAM_SIZE="4G" \
             -e CPU_CORES="2" \
             dockurr/windows
@@ -27,9 +28,7 @@ jobs:
           echo "Monitoring internal Windows installation stream..."
           echo "This process takes 12-15 minutes to fully configure the OS environment."
           
-          # Polls continuously until the dockurr/windows system signals readiness
           while ! docker logs windows-vm 2>&1 | grep -q "Windows started successfully"; do
-            # Outputs the current status directly to the console so the runner doesn't appear frozen
             docker logs --tail 2 windows-vm
             sleep 20
           done
@@ -39,5 +38,4 @@ jobs:
       - name: Execute Local Integration Script
         run: |
           echo "Windows LTSC environment is accessible locally on the runner network."
-          # Performs an initial endpoint configuration handshake request
           curl -vvv http://127.0.0.1:8006
