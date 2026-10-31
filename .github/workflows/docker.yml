@@ -13,10 +13,11 @@ jobs:
       - name: System Preparation and Dependency Injection
         run: |
           apk update --no-cache
-          apk add --no-cache openssh-client bash curl openssh
+          # Upterm requires openssh-client and coreutils to negotiate the secure handshake
+          apk add --no-cache openssh-client coreutils git bash
 
-      - name: Establish Secure Outbound SSH Tunnel
-        uses: mxschmitt/action-tmate@v3
-        timeout-minutes: 15 # Correct placement (at the step level)
+      - name: Establish Secure Outbound SSH Tunnel (Upterm)
+        uses: lhotari/action-upterm@v1
         with:
-          limit-access-to-actor: false # Recommended: Only allows your GitHub user account to connect
+          ## Recommended: Limits access exclusively to your GitHub user profile
+          limit-access-to-actor: true 
