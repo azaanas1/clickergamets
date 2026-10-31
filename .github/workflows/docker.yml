@@ -13,7 +13,7 @@ jobs:
     steps:
       - name: Spin Up Local Windows LTSC Environment
         run: |
-          # Binds port 8006 explicitly to the runner's local loopback interface (127.0.0.1)
+          # Changed image to dockurr/windows (double 'r') to match Docker Hub registry
           docker run -d --name windows-vm \
             -p 127.0.0.1:8006:8006 \
             --device=/dev/kvm \
@@ -21,12 +21,11 @@ jobs:
             -e VERSION="win11ltsc" \
             -e RAM_SIZE="4G" \
             -e CPU_CORES="2" \
-            dockur/windows
+            dockurr/windows
 
       - name: Wait for Local System Boot Initialization
         run: |
-          echo "Monitoring local container startup on 127.0.0.1..."
-          # Standard loop to verify the container internal web server responds locally
+          echo "We are waiting up to 2 minutes for the local web server port to mount..."
           id=0
           until curl -s http://127.0.0.1:8006 > /dev/null || [ $id -eq 12 ]; do
             echo "Waiting for Windows environment initialization..."
@@ -37,5 +36,4 @@ jobs:
       - name: Execute Local Integration Script
         run: |
           echo "Windows LTSC environment is accessible locally on the runner network."
-          # You can add your curl, compilation, or automation scripts here
           curl -I http://127.0.0.1:8006
