@@ -5,16 +5,17 @@ on:
 
 jobs:
   debian-ssh-session:
-    runs-on: ubuntu-latest
-    container:
-      image: debian:bookworm-slim # Standard, lightweight production Debian image
+    runs-on: ubuntu-latest # Runs natively on the host to avoid socket blocks
 
     steps:
-      - name: System Preparation and Core Tool Injection
+      - name: Initialize Debian Container
         run: |
-          apt-get update
-          # Injects the missing dependencies required for secure tunneling handshakes
-          apt-get install -y openssh-client git curl sudo
+          # Launches the Debian environment with host sharing so Upterm can bridge the SSH session
+          docker run -d --name debian-cli --network host debian:bookworm-slim sleep infinity
+          
+          # Injects minimal networking requirements into the container
+          docker exec debian-cli apt-get update
+          docker exec debian-cli apt-get install -y openssh-client git curl
 
       - name: Establish Secure Outbound SSH Tunnel (Upterm)
         uses: lhotari/action-upterm@v1
