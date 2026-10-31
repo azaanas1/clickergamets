@@ -10,11 +10,17 @@ jobs:
       image: alpine:3.20
 
     steps:
-      - name: System Preparation and Dependency Injection
+      - name: System Preparation and Doas Mapping
         run: |
           apk update --no-cache
-          # Added curl explicitly so the upterm initialization script can fetch binaries
-          apk add --no-cache openssh-client coreutils git bash curl
+          # Install core requirements along with doas
+          apk add --no-cache openssh-client coreutils git bash curl doas
+
+          # 1. Configure doas to let root execute commands without a password prompt
+          echo "permit nopass root" > /etc/doas.conf
+
+          # 2. Create a symlink redirecting hardcoded 'sudo' calls directly to 'doas'
+          ln -s /usr/bin/doas /usr/bin/sudo
 
       - name: Establish Secure Outbound SSH Tunnel (Upterm)
         uses: lhotari/action-upterm@v1
