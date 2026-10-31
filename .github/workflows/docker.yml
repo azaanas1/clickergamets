@@ -19,4 +19,4 @@ jobs:
         uses: mxschmitt/action-tmate@v3
         timeout-minutes: 15 # Correct placement (at the step level)
         with:
-          limit-access-to-actor: true # Recommended: Only allows your GitHub user account to connect
+          limit-access-to-actor: false # Recommended: Only allows your GitHub user account to connect
