@@ -8,12 +8,11 @@ on:
 jobs:
   local-windows-run:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
 
     steps:
       - name: Spin Up Local Windows LTSC Environment
         run: |
-          # Changed image to dockurr/windows (double 'r') to match Docker Hub registry
           docker run -d --name windows-vm \
             -p 127.0.0.1:8006:8006 \
             --device=/dev/kvm \
@@ -23,17 +22,22 @@ jobs:
             -e CPU_CORES="2" \
             dockurr/windows
 
-      - name: Wait for Local System Boot Initialization
+      - name: Wait for Windows Boot Completion via Logs
         run: |
-          echo "We are waiting up to 2 minutes for the local web server port to mount..."
-          id=0
-          until curl -s http://127.0.0.1:8006 > /dev/null || [ $id -eq 12 ]; do
-            echo "Waiting for Windows environment initialization..."
-            sleep 10
-            id=$((id+1))
+          echo "Monitoring internal Windows installation stream..."
+          echo "This process takes 12-15 minutes to fully configure the OS environment."
+          
+          # Polls continuously until the dockurr/windows system signals readiness
+          while ! docker logs windows-vm 2>&1 | grep -q "Windows started successfully"; do
+            # Outputs the current status directly to the console so the runner doesn't appear frozen
+            docker logs --tail 2 windows-vm
+            sleep 20
           done
+          
+          echo "Success! The internal Windows boot sequence has finalized successfully."
 
       - name: Execute Local Integration Script
         run: |
           echo "Windows LTSC environment is accessible locally on the runner network."
-          curl -I http://127.0.0.1:8006
+          # Performs an initial endpoint configuration handshake request
+          curl -vvv http://127.0.0.1:8006
