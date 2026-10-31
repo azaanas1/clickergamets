@@ -8,13 +8,14 @@ on:
 jobs:
   local-windows-run:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60 # Extended slightly to give you plenty of interactive desktop testing time
 
     steps:
       - name: Spin Up Local Windows LTSC Environment
         run: |
+          # Map port 3389 (RDP) on the host runner loopback network interface
           docker run -d --name windows-vm \
-            -p 127.0.0.1:8006:8006 \
+            -p 127.0.0.1:3389:3389 \
             --device=/dev/kvm \
             --cap-add=NET_ADMIN \
             -e VERSION="11l" \
@@ -22,23 +23,26 @@ jobs:
             -e CPU_CORES="2" \
             dockurr/windows
 
-      - name: Wait for Local Web Service Initialization
+      - name: Wait for Windows Boot Completion via Logs
         run: |
-          echo "Waiting for local port 8006 to respond..."
-          until curl -s http://127.0.0.1:8006 > /dev/null; do
-            sleep 10
+          echo "Monitoring internal Windows installation stream..."
+          while ! docker logs windows-vm 2>&1 | grep -q "Windows started successfully"; do
+            docker logs --tail 2 windows-vm
+            sleep 20
           done
-          echo "Local web server is responding!"
+          echo "Windows is fully up and running!"
 
-      - name: Expose Windows Desktop via Public Web URL
+      - name: Expose Windows RDP via Public Tunnel
         run: |
-          # Install Node.js standard package manager and localtunnel
           sudo apt-get update && sudo apt-get install -y nodejs npm
           sudo npm install -g localtunnel
           
           echo "--------------------------------------------------------"
-          echo "CLICK THE LINK BELOW TO ACCESS THE WINDOWS DESKTOP:"
+          echo "      CRITICAL REMOTE DESKTOP CONNECTION DATA:         "
+          echo "--------------------------------------------------------"
+          echo "   USERNAME: Docker"
+          echo "   PASSWORD: (Leave blank / No password)"
           echo "--------------------------------------------------------"
           
-          # Launch localtunnel pointing straight to the local Windows port
-          lt --port 8006
+          # Starts the tunnel pointing directly to the hardcoded RDP port layer
+          lt --port 3389
