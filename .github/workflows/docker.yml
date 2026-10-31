@@ -22,24 +22,23 @@ jobs:
             -e CPU_CORES="2" \
             dockurr/windows
 
-      - name: Wait for Windows Boot Completion via Logs
+      - name: Wait for Local Web Service Initialization
         run: |
-          echo "Monitoring internal Windows installation stream..."
-          echo "This process takes 12-15 minutes to fully configure the OS environment."
-          
-          while ! docker logs windows-vm 2>&1 | grep -q "Windows started successfully"; do
-            docker logs --tail 2 windows-vm
-            sleep 20
+          echo "Waiting for local port 8006 to respond..."
+          until curl -s http://127.0.0.1:8006 > /dev/null; do
+            sleep 10
           done
-          
-          echo "Success! The internal Windows boot sequence has finalized successfully."
+          echo "Local web server is responding!"
 
-      - name: Execute Local Integration Script
+      - name: Expose Windows Desktop via Public Web URL
         run: |
-          echo "Windows LTSC environment is accessible locally on the runner network."
-          curl -vvv http://127.0.0.1:8006
-
-      - name: Open Connection Tunnel
-        uses: lhotari/action-upterm@v1
-        with:
-          limit-access-to-actor: true
+          # Install Node.js standard package manager and localtunnel
+          sudo apt-get update && sudo apt-get install -y nodejs npm
+          sudo npm install -g localtunnel
+          
+          echo "--------------------------------------------------------"
+          echo "CLICK THE LINK BELOW TO ACCESS THE WINDOWS DESKTOP:"
+          echo "--------------------------------------------------------"
+          
+          # Launch localtunnel pointing straight to the local Windows port
+          lt --port 8006
