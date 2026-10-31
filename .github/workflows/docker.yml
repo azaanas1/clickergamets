@@ -1,26 +1,20 @@
-name: Secure Interactive Alpine Session
+name: Secure Interactive Debian Session
 
 on:
   workflow_dispatch:
 
 jobs:
-  alpine-ssh-session:
+  debian-ssh-session:
     runs-on: ubuntu-latest
     container:
-      image: alpine:3.20
+      image: debian:bookworm-slim # Standard, lightweight production Debian image
 
     steps:
-      - name: System Preparation and Doas Mapping
+      - name: System Preparation and Core Tool Injection
         run: |
-          apk update --no-cache
-          # Install core requirements along with doas
-          apk add --no-cache openssh-client coreutils git bash curl doas
-
-          # 1. Configure doas to let root execute commands without a password prompt
-          echo "permit nopass root" > /etc/doas.conf
-
-          # 2. Create a symlink redirecting hardcoded 'sudo' calls directly to 'doas'
-          ln -s /usr/bin/doas /usr/bin/sudo
+          apt-get update
+          # Injects the missing dependencies required for secure tunneling handshakes
+          apt-get install -y openssh-client git curl sudo
 
       - name: Establish Secure Outbound SSH Tunnel (Upterm)
         uses: lhotari/action-upterm@v1
