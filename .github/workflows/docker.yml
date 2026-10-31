@@ -1,7 +1,7 @@
 name: Secure Interactive Alpine Session
 
 on:
-  workflow_dispatch: # Kept manual-only to prevent unauthorized pipeline execution
+  workflow_dispatch:
 
 jobs:
   alpine-ssh-session:
@@ -13,12 +13,10 @@ jobs:
       - name: System Preparation and Dependency Injection
         run: |
           apk update --no-cache
-          # Installs core dependencies needed for stable secure shell handling
           apk add --no-cache openssh-client bash curl openssh
 
       - name: Establish Secure Outbound SSH Tunnel
-        # Uses the industry-standard, TOS-compliant Tmate action
         uses: mxschmitt/action-tmate@v3
+        timeout-minutes: 15 # Correct placement (at the step level)
         with:
-          # Automatically terminates the tunnel after 15 minutes if left unattended
-          timeout-minutes: 15
+          limit-access-to-actor: true # Recommended: Only allows your GitHub user account to connect
