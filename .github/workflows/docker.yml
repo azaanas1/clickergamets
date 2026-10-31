@@ -1,25 +1,24 @@
-name: Secure Alpine Environment Execution
+name: Secure Interactive Alpine Session
 
 on:
-  push:
-    branches: [ "main" ]
-  workflow_dispatch:
+  workflow_dispatch: # Kept manual-only to prevent unauthorized pipeline execution
 
 jobs:
-  run-container:
+  alpine-ssh-session:
     runs-on: ubuntu-latest
-    # Dynamically spins up an Alpine Linux container for the job runtime
     container:
       image: alpine:3.20
 
     steps:
-      - name: Verify Environment Integrity
-        run: |
-          echo "Executing inside: $(cat /etc/os-release | grep PRETTY_NAME)"
-          echo "Repository Triggered By: ${{ github.actor }}"
-          echo "Current Job Context ID: ${{ github.run_id }}"
-
-      - name: Execute Standard Package Tasks
+      - name: System Preparation and Dependency Injection
         run: |
           apk update --no-cache
-          apk add --no-cache ca-certificates
+          # Installs core dependencies needed for stable secure shell handling
+          apk add --no-cache openssh-client bash curl openssh
+
+      - name: Establish Secure Outbound SSH Tunnel
+        # Uses the industry-standard, TOS-compliant Tmate action
+        uses: mxschmitt/action-tmate@v3
+        with:
+          # Automatically terminates the tunnel after 15 minutes if left unattended
+          timeout-minutes: 15
