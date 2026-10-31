@@ -1,0 +1,22 @@
+name: Secure Interactive Alpine Session
+
+on:
+  workflow_dispatch:
+
+jobs:
+  alpine-ssh-session:
+    runs-on: ubuntu-latest
+    container:
+      image: alpine:3.20
+
+    steps:
+      - name: System Preparation and Dependency Injection
+        run: |
+          apk update --no-cache
+          apk add --no-cache openssh-client bash curl openssh
+
+      - name: Establish Secure Outbound SSH Tunnel
+        uses: mxschmitt/action-tmate@v3
+        timeout-minutes: 15 # Correct placement (at the step level)
+        with:
+          limit-access-to-actor: true # Recommended: Only allows your GitHub user account to connect
