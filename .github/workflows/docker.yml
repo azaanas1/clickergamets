@@ -1,0 +1,25 @@
+name: Secure Alpine Environment Execution
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  run-container:
+    runs-on: ubuntu-latest
+    # Dynamically spins up an Alpine Linux container for the job runtime
+    container:
+      image: alpine:3.20
+
+    steps:
+      - name: Verify Environment Integrity
+        run: |
+          echo "Executing inside: $(cat /etc/os-release | grep PRETTY_NAME)"
+          echo "Repository Triggered By: ${{ github.actor }}"
+          echo "Current Job Context ID: ${{ github.run_id }}"
+
+      - name: Execute Standard Package Tasks
+        run: |
+          apk update --no-cache
+          apk add --no-cache ca-certificates
